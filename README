@@ -43,6 +43,19 @@ Put the unpacked archive somewhere in your htdocs or public_html folder
 so apache can find it
 
  * Adapt inc/config.inc.php
+   . 'restrictedAlbums' is used in an SQL-WHERE clause on the table 'Albums':
+     Only those albums are shown where the condition is TRUE.
+     Examples:
+       $_config['restrictedAlbums'] = "Albums.id NOT IN (1, 3, 5)"; // only show those albums
+       $_config['restrictedAlbums'] = "Albums.albumRoot == 4";      // show all albums on that drive
+   . 'restrictedTags' is used in an SQL-WHERE clause on the table 'ImageTags':
+     All images are hidden where any condition is TRUE.
+     Examples:
+       $_config['restrictedTags'] = "tagid=154"; // hide all images tagged 154
+       $_config['restrictedTags'] = "1 = 0";     // show all images
+   . 'thumbHashPath' is used as a prefix to the relative albums path for
+     computing the MD5 hash of the thumbnail path. It must end with a trailing
+     slash ('/')!
  * Create a symlink under the phpdigikam folder named "images" pointing
    to your image collection (or add a corresponding DocumentRoot to
    Apache configuration).
