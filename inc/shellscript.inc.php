@@ -59,8 +59,8 @@ class UpdateScript {
 			$f.="echo \"".
 					$this->color("* Create images for album \"$albumDir\"", $this->_green).
 					" (".(++$count1)." of $numRows1".")\"\n";
-			$f.="mkdir -p thumbs/".$albumDir."\n";
-			$f.="mkdir -p images/".$albumDir."\n";
+			$f.="mkdir -p 'thumbs/".$albumDir."'\n";
+			$f.="mkdir -p 'images/".$albumDir."'\n";
 	
 			$f.="CONVERT=\"".$_config["convertBin"]."\"\n";
 			$f.="EXIF=\"".$_config["exifBin"]."\"\n";
@@ -81,20 +81,20 @@ class UpdateScript {
 				$f.="echo \"".$this->color("  * ".$row2["filename"], $this->_violet)
 							." (".(++$count2)." of $numRows2".")\"\n";
 	
-				$f.="if( [[ \"\$FROM/$path\" -nt \"\$TO/thumbs/$path\" ]] ) then\n";
+				$f.="if [ \"\$FROM/$path\" -nt \"\$TO/thumbs/$path\" ]; then\n";
 	
 				# Rotate the image if needed
 				$f.="  rotate=\"\"\n".
-	"  if( [[ `\$EXIF \$FROM/$path | grep Orientation | grep right | wc -l` -gt 0 ]] ) then\n".
+	"  if \"\$EXIF\" \"\$FROM/$path\" | grep -q 'Orientation.*right'; then\n".
 	"    rotate=\" -rotate 90\"\n".
 	"  fi\n";
 	
 				$f.="echo \"    thumbnail\"\n";
-				$cmd  = "\$CONVERT \$rotate -resize x".$_config['thumbSize']." ".
-								"\$FROM/$path \$TO/thumbs/$path";
+				$cmd  = "\"\$CONVERT\" \$rotate -resize x".$_config['thumbSize']." ".
+								"\"\$FROM/$path\" \"\$TO/thumbs/$path\"";
 				$f.="echo \"    reduced size image\"\n";
-				$cmd2 = "\$CONVERT \$rotate -resize x".$_config['imageSize']." ".
-								"\$FROM/$path \$TO/images/$path";
+				$cmd2 = "\"\$CONVERT\" \$rotate -resize x".$_config['imageSize']." ".
+								"\"\$FROM/$path\" \"\$TO/images/$path\"";
 	
 				$f.=$cmd."\n";
 				$f.=$cmd2."\n";
