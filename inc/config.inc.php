@@ -17,7 +17,7 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 */
-// C O N F I G / / / / / / / / / / / / 
+// C O N F I G / / / / / / / / / / / /
 
 //Language
 require_once('lang/en.lang.php');
@@ -54,12 +54,12 @@ $_config['imageSize'] = "720";
 //Layout
 $_config['numCols'] = "4";
 $_config['photosPerPage'] = "40";
-// / / / / / / / / / / / / / / / / / / 
+// / / / / / / / / / / / / / / / / / /
 
 //These should be automatically correct
 $_config['selfDir']=substr($_SERVER['SCRIPT_FILENAME'], 0,
 		                          strrpos($_SERVER['SCRIPT_FILENAME'], '/'));
 $_config['selfUrl']=substr($_SERVER['SCRIPT_NAME'], 0,
 		                          strrpos($_SERVER['SCRIPT_NAME'], '/'));
-$_config['scriptname']=substr(strrchr($_SERVER['SCRIPT_NAME'], '/'),1);
+$_config['scriptname']=substr(strrchr($_SERVER['SCRIPT_NAME'], '/'), 1);
 ?>

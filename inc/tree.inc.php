@@ -43,7 +43,7 @@ class Node {
 	public function setParent($parent) {
 		$this->_parent = $parent;
 	}
-	
+
 	public function children() {
 		return $this->_children;
 	}
@@ -64,9 +64,11 @@ class Node {
 	public function data() {
 		return $this->_data;
 	}
+
 	public function key() {
 		return $this->_key;
 	}
+
 	public function path() {
 		return $this->_path;
 	}
@@ -95,22 +97,23 @@ class Tree {
 	}
 
 	public function renderRecursive($node, $level) {
-		foreach($node->children() as $child) {
+		foreach ($node->children() as $child) {
 			echo str_repeat('  ', $level);
 			echo $child->data()." (".$child->key().")";
 			echo "\n";
-			$this->renderRecursive($child, $level+1);
+			$this->renderRecursive($child, $level + 1);
 		}
 	}
+
 	public function render() {
 		echo "<pre>";
-		$this->renderRecursive($this->root(),0);
+		$this->renderRecursive($this->root(), 0);
 		echo "</pre>";
 	}
 
 	public function findNode($key /*$parent*/) {
 		$parent;
-		switch(count(func_get_args())) {
+		switch (count(func_get_args())) {
 			case 1: $parent = $this->root(); break;
 			case 2: $parent = func_get_arg(1); break;
 			default: die('Not allowed');
@@ -119,14 +122,13 @@ class Tree {
 		$found = NULL;
 
 		//FIXME: foreach doesn't work!
-		for($i=0; $i<count($parent->children()); $i++) {
+		for ($i = 0; $i < count($parent->children()); $i++) {
 			$array = $parent->children();
 			$child = $array[$i];
 
-			if($child->key() == $key) {
+			if ($child->key() == $key) {
 				$found = $child;
-			}
-			else if($found == NULL) {
+			} elseif ($found == NULL) {
 				$found = $this->findNode($key, $child);
 			}
 		}
@@ -137,7 +139,7 @@ class Tree {
 		$path = array();
 		$node = $this->findNode($key, $this->root());
 
-		while($node != $this->root()) {
+		while ($node != $this->root()) {
 			$path[] = $node;
 			$node = $node->itsParent();
 		}
@@ -147,8 +149,8 @@ class Tree {
 
 	private function numNodesBelowRecursive($parent) {
 		$count = 1;
-		foreach($parent->children() as $child) {
-			$count+=$this->numNodesBelowRecursive($child);
+		foreach ($parent->children() as $child) {
+			$count += $this->numNodesBelowRecursive($child);
 		}
 		return $count;
 	}
@@ -157,7 +159,7 @@ class Tree {
 	}
 
 	public function nodesBelow($parent, &$nodesArray) {
-		foreach($parent->children() as $child) {
+		foreach ($parent->children() as $child) {
 			$nodesArray[] = $child;
 			$this->nodesBelow($child, $nodesArray);
 		}

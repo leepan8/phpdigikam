@@ -15,8 +15,8 @@ GNU General Public License for more details.
 */
 
 $languages = array(
- 'en' => 'English',
- 'de' => 'Deutsch'
+    'en' => 'English',
+    'de' => 'Deutsch'
 );
 
 ?>

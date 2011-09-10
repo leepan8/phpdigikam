@@ -25,16 +25,17 @@ class FormBase {
 	function __construct() {
 		$this->_widgets = array();
 	}
+
 	public function add($w) {
 		array_push($this->_widgets, $w);
 	}
+
 	public function render($submitCaption = 'Go') {
 		echo "<table>\n\t<form method=\"post\" action=\"{$_SERVER["REQUEST_URI"]}\">\n";
-		for($i = 0; $i < count($this->_widgets); $i++) {
-			if(get_class($this->_widgets[$i]) == 'WidgetHidden') {
+		for ($i = 0; $i < count($this->_widgets); $i++) {
+			if (get_class($this->_widgets[$i]) == 'WidgetHidden') {
 				$this->_widgets[$i]->render();
-			}
-			else {
+			} else {
 				echo "\t<tr>\n\t\t<td>".$this->_widgets[$i]->description()."</td>\n\t\t<td>";
 				$this->_widgets[$i]->render();
 				echo "\n\t\t</td>\n\t</tr>\n";
@@ -52,33 +53,41 @@ class WidgetBase {
 	private $_name;
 	private $_defaultValue;
 	private $_description;
-	
+
 	public function __construct($description, $name, $defaultValue='') {
 		$this->setName($name);
 		$this->setDefaultValue($defaultValue);
 		$this->setDescription($description);
 	}
+
 	public function name() {
 		return $this->_name;
 	}
+
 	public function setName($name) {
 		$this->_name = $name;
 	}
+
 	public function defaultValue() {
 		return $this->_defaultValue;
 	}
+
 	public function setDefaultValue($v) {
 		$this->_defaultValue = $v;
 	}
+
 	public function value() {
 		return $_POST[$this->name()];
 	}
+
 	public function setDescription($description) {
 		$this->_description = $description;
 	}
+
 	public function description() {
 		return $this->_description;
 	}
+
 	public function render() {
 	}
 };
@@ -90,7 +99,7 @@ class WidgetText extends WidgetBase {
 	public function __construct($description, $name, $defaultValue='') {
 		parent::__construct($description, $name, $defaultValue);
 
-		$this->_size=20;
+		$this->_size = 20;
 	}
 
 	public function render() {
@@ -121,11 +130,12 @@ class WidgetDropdown extends WidgetBase {
 		parent::__construct($description, $name, $defaultValue);
 		$this->_choices = $values;
 	}
+
 	public function render() {
 		printf('<select name="%s">'."\n", $this->name());
-		foreach($this->_choices as $key => $val) {
+		foreach ($this->_choices as $key => $val) {
 			printf('<option value="%s"', $key);
-			if($key == $this->defaultValue())
+			if ($key == $this->defaultValue())
 				print(' selected');
 			printf(">%s</option>\n", $val);
 		}
@@ -142,6 +152,7 @@ class WidgetHidden extends WidgetBase {
 	function __construct($name, $value) {
 		parent::__construct('', $name, $value);
 	}
+
 	public function render() {
 		printf('<input type="hidden" name="%s" value="%s" />', $this->name(), $this->defaultValue());
 	}
@@ -154,9 +165,10 @@ class WidgetCheck extends WidgetBase {
 	public function __construct($description, $name, $value) {
 		parent::__construct($description, $name, $value);
 	}
+
 	public function render() {
 		echo '<table style="text-align: left"><tr><td>';
-		foreach($this->defaultValue() as $key => $val) {
+		foreach ($this->defaultValue() as $key => $val) {
 			printf('<input type="checkbox" name="%s[]" value="%s" />&nbsp;%s<br />'."\n",
 		 	$this->name(), $key, $val);
 		}
@@ -174,20 +186,19 @@ class Page3 extends FormBase {
 
 		require_once('informativepdo.inc.php');
 		$db = new InformativePDO('sqlite:/'.$_POST['digikamDb']);
-		if($db) {
+		if ($db) {
 			printf('<h3 style="color: green">%s</h3>',
 			 $i18n['dbConnectSuccess']
 			);
-		}
-		else {
+		} else {
 			printf('<h3 style="color: red">%s</h3>', $i18n['dbConnectFailure']);
 			die();
 		}
 
 		$rows = $db->query('SELECT url, id FROM Albums')->fetchAll();
 
-		$a=array();
-		foreach($rows as $row)
+		$a = array();
+		foreach ($rows as $row)
 			$a[$row['id']] = $row['url'];
 
 		$this->add(new WidgetCheck($i18n['setup_CheckAlbumsToShow'], 'restrictedAlbums', $a));
@@ -210,57 +221,56 @@ class Page3 extends FormBase {
 		global $i18n;
 
 		$restrictedAlbums = 'Albums.id IN (';
-		$i=0;
-		foreach($_POST['restrictedAlbums'] as $ralbum) {
-			if($i!=0)
-				$restrictedAlbums.=',';
-			$restrictedAlbums.=$ralbum;
+		$i = 0;
+		foreach ($_POST['restrictedAlbums'] as $ralbum) {
+			if ($i != 0)
+				$restrictedAlbums .= ',';
+			$restrictedAlbums .= $ralbum;
 			$i++;
 		}
-		$restrictedAlbums.=')';
-	
-		$c="<?php\n";
-		$c.="// C O N F I G / / / / / / / / / / / / \n\n";
-		$c.="//Language\n";
-		$c.="require_once('lang/{$_POST['language']}.lang.php');\n\n";
-		$c.="//Albums to show\n";
-		$c.="\$_config['restrictedAlbums'] = \"$restrictedAlbums\";\n";
-		$c.="//Paths\n";
-		$c.="\$_config['digikamDb'] = \"{$_POST['digikamDb']}\";\n";
-		$c.="\$_config['photosPath'] = \"{$_POST['photosPath']}\";\n";
-		$c.="\$_config['convertBin'] = \"{$_POST['convertBin']}\";\n";
-		$c.="\$_config['exifBin'] = \"{$_POST['exifBin']}\";\n";
-		$c.="//Image and thumbnail sizes\n";
-		$c.="\$_config['thumbSize'] = \"{$_POST['thumbSize']}\";\n";
-		$c.="\$_config['imageSize'] = \"{$_POST['imageSize']}\";\n";
-		$c.="//Layout\n";
-		$c.="\$_config['numCols'] = \"{$_POST['numCols']}\";\n";
-		$c.="\$_config['photosPerPage'] = \"{$_POST['photosPerPage']}\";\n";
-	
-		$c.="// / / / / / / / / / / / / / / / / / / \n\n";
-		$c.="//These should be automatically correct\n";
-		$c.="\$_config['selfDir']=substr(\$_SERVER['SCRIPT_FILENAME'], 0,
+		$restrictedAlbums .= ')';
+
+		$c  = "<?php\n";
+		$c .= "// C O N F I G / / / / / / / / / / / / \n\n";
+		$c .= "//Language\n";
+		$c .= "require_once('lang/{$_POST['language']}.lang.php');\n\n";
+		$c .= "//Albums to show\n";
+		$c .= "\$_config['restrictedAlbums'] = \"$restrictedAlbums\";\n";
+		$c .= "//Paths\n";
+		$c .= "\$_config['digikamDb'] = \"{$_POST['digikamDb']}\";\n";
+		$c .= "\$_config['photosPath'] = \"{$_POST['photosPath']}\";\n";
+		$c .= "\$_config['convertBin'] = \"{$_POST['convertBin']}\";\n";
+		$c .= "\$_config['exifBin'] = \"{$_POST['exifBin']}\";\n";
+		$c .= "//Image and thumbnail sizes\n";
+		$c .= "\$_config['thumbSize'] = \"{$_POST['thumbSize']}\";\n";
+		$c .= "\$_config['imageSize'] = \"{$_POST['imageSize']}\";\n";
+		$c .= "//Layout\n";
+		$c .= "\$_config['numCols'] = \"{$_POST['numCols']}\";\n";
+		$c .= "\$_config['photosPerPage'] = \"{$_POST['photosPerPage']}\";\n";
+
+		$c .= "// / / / / / / / / / / / / / / / / / / \n\n";
+		$c .= "//These should be automatically correct\n";
+		$c .= "\$_config['selfDir'] = substr(\$_SERVER['SCRIPT_FILENAME'], 0,
 		                          strrpos(\$_SERVER['SCRIPT_FILENAME'], '/'));\n";
-		$c.="\$_config['selfUrl']=substr(\$_SERVER['SCRIPT_NAME'], 0,
+		$c .= "\$_config['selfUrl'] = substr(\$_SERVER['SCRIPT_NAME'], 0,
 		                          strrpos(\$_SERVER['SCRIPT_NAME'], '/'));\n";
-		$c.="\$_config['scriptname']=substr(strrchr(\$_SERVER['SCRIPT_NAME'], '/'),1);\n";
-		$c.="?>\n";
-	
+		$c .= "\$_config['scriptname'] = substr(strrchr(\$_SERVER['SCRIPT_NAME'], '/'), 1);\n";
+		$c .= "?>\n";
+
 		$fh = fopen('inc/config.inc.php', 'w');
 		fwrite($fh, $c);
 		fclose($fh);
-	
-		if(!$fh) {
+
+		if (!$fh) {
 			printf('<h3 style="color: red">%s</h3>', $i18n['writeConfigFailure']);
 			printf('<p>%s</p>', $i18n['reloadPage']);
-		}
-		else {
+		} else {
 			printf('<h2 style="color: green">%s</h2>', $i18n['writeConfigSuccess']);
 		}
 		echo '<textarea cols="85" rows="27">'.$c.'</textarea>';
-	
-		@include('config.inc.php');	
-	
+
+		@include('config.inc.php');
+
 		print("<h2>{$i18n['generateThumbnails']}</h2>");
 		printf($i18n['setup_lastStep'], $_config["selfUrl"], $_config["scriptname"]);
 	}
@@ -311,23 +321,20 @@ class Page1 extends FormBase {
 
 echo "<h1>Setup PHPDigikam Script</h1>";
 
-if(!isset($_POST['sent'])) {
+if (!isset($_POST['sent'])) {
 	$page1 = new Page1();
 	$page1->render($i18n['Continue']);
-}
-else {
+} else {
 	$i18n = array();
 	require("lang/{$_POST['language']}.lang.php");
 
-	if($_POST['sent'] == 'page1') {
+	if ($_POST['sent'] == 'page1') {
 		$page2 = new Page2();
 		$page2->render($i18n['Continue']);
-	}
-	else if($_POST['sent'] == 'page2') {
+	} elseif ($_POST['sent'] == 'page2') {
 		$page3 = new Page3();
 		$page3->render($i18n['Continue']);
-	}
-	else if($_POST['sent'] == 'page3') {
+	} elseif ($_POST['sent'] == 'page3') {
 		$page3 = new Page3();
 		$page3->processData();
 	}

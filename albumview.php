@@ -23,8 +23,8 @@ GNU General Public License for more details.
  * Everything is handled in class Photoalbum.
  */
 
-if(!file_exists('inc/config.inc.php') && !strstr($_SERVER['REQUEST_URI'], 'setup')) {
-	$scriptname = substr(strrchr($_SERVER['SCRIPT_NAME'], '/'),1);
+if (!file_exists('inc/config.inc.php') && !strstr($_SERVER['REQUEST_URI'], 'setup')) {
+	$scriptname = substr(strrchr($_SERVER['SCRIPT_NAME'], '/'), 1);
 	$url = substr($_SERVER['SCRIPT_NAME'], 0, strrpos($_SERVER['SCRIPT_NAME'], '/'));
 	header("Location: $url/$scriptname/setup");
 	exit;

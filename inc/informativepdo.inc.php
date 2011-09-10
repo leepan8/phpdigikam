@@ -21,7 +21,7 @@ GNU General Public License for more details.
 class InformativePDO extends PDO {
 	function __construct($dataSourceName) {
 		PDO::__construct($dataSourceName);
-		$this->_count=0;
+		$this->_count = 0;
 	}
 
 	public function query($sql) {

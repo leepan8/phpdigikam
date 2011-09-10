@@ -17,7 +17,7 @@ GNU General Public License for more details.
 //Main
 $i18n['photos'] =
 	'Photos';
-$i18n['executeUpdateScript'] = 
+$i18n['executeUpdateScript'] =
 	'Please execute &quot;update.sh&quot; to update thumbnails.';
 $i18n['debugFooter'] =
 	'Took %s SQLite queries and %s seconds to generate.';
