@@ -36,9 +36,9 @@ for subdir, dirs, files in os.walk(dir):
   mime = gnomevfs.get_mime_type(path)
   mtime = int(os.path.getmtime(path))
   if not os.path.exists(gnome.ui.thumbnail_path_for_uri(uri, gnome.ui.THUMBNAIL_SIZE_LARGE)) and thumbFactory.can_thumbnail(uri ,mime, 0):
-      print "Generating for "+uri
+      print "Generating for %s" % uri
       thumbnail=thumbFactory.generate_thumbnail(uri, mime)
       if thumbnail is not None:                    
           thumbFactory.save_thumbnail(thumbnail, uri, mtime) 
   else:
-      print "Skip "+uri
+      print "Skip %s" % uri
