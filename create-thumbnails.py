@@ -31,9 +31,10 @@ dir=sys.argv[1]
 thumbFactory = gnome.ui.ThumbnailFactory(gnome.ui.THUMBNAIL_SIZE_LARGE)
 for subdir, dirs, files in os.walk(dir):
  for file in files:
-  uri=gnomevfs.get_uri_from_local_path(subdir+"/"+file)  
-  mime=gnomevfs.get_mime_type(subdir+"/"+file)
-  mtime=int(time.strftime("%s",time.localtime(os.path.getmtime(subdir+"/"+file))))
+  path = os.path.join(subdir, file)
+  uri = gnomevfs.get_uri_from_local_path(path)  
+  mime = gnomevfs.get_mime_type(path)
+  mtime=int(time.strftime("%s",time.localtime(os.path.getmtime(path))))
   if not os.path.exists(gnome.ui.thumbnail_path_for_uri(uri, gnome.ui.THUMBNAIL_SIZE_LARGE)) and thumbFactory.can_thumbnail(uri ,mime, 0):
       print "Generating for "+uri
       thumbnail=thumbFactory.generate_thumbnail(uri, mime)
