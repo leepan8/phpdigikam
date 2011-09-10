@@ -648,6 +648,21 @@ class Photoalbum {
 			:  "{$_SERVER['REQUEST_URI']}/page_$page.html";
 	}
 
+	/**
+	 * Encode to Rfc2396 as used by http://jens.triq.net/thumbnail-spec/thumbsave.html
+	 */
+	private function toRfc2396($path) {
+		$ret = "";
+		for ($i = 0; $i < strlen($path); $i++) {
+			$o = ord($path[$i]);
+			if ($o <= 0x20 or $o >= 127)
+				$ret .= "%" . strtoupper(dechex($o));
+			else
+				$ret .= $path[$i];
+		}
+		return $ret;
+	}
+
     /**
      * Returns the thumb filename for the given image pathname
      */
@@ -655,12 +670,7 @@ class Photoalbum {
             global $_config;
 
             $can_url=$_config['thumbHashPath'].$path;
-            $can_url=rawurlencode($can_url);
-            // restore characters that are not encoded when generating thumbnails
-            $can_url=str_replace("%2F", "/", $can_url);
-            $can_url=str_replace("%3F", "?", $can_url);
-            $can_url=str_replace("%26", "&", $can_url);
-            $can_url=str_replace("%3D", "=", $can_url);
+	    $can_url = $this->toRfc2396($can_url);
             $can_url="file://".$can_url;
 			return md5($can_url).'.png';	
     }
