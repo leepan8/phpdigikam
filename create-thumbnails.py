@@ -38,7 +38,7 @@ for subdir, dirs, files in os.walk(dir):
   if not os.path.exists(gnome.ui.thumbnail_path_for_uri(uri, gnome.ui.THUMBNAIL_SIZE_LARGE)) and thumbFactory.can_thumbnail(uri ,mime, 0):
       print "Generating for "+uri
       thumbnail=thumbFactory.generate_thumbnail(uri, mime)
-      if thumbnail != None:                    
+      if thumbnail is not None:                    
           thumbFactory.save_thumbnail(thumbnail, uri, mtime) 
   else:
       print "Skip "+uri
