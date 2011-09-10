@@ -32,10 +32,10 @@ class TagTree extends Tree {
 		parent::__construct();
 
 		//Get the tag tree from the database
-		$tagsQuery = $this->_db->query('select Tags.id,pid,
-		Tags.name,a.relativePath||\'/\'||i.name as path from Tags 
-		left outer join Images as i on i.id = Tags.icon 
-		left outer join Albums as a on a.id = i.album
+		$tagsQuery = $this->_db->query('SELECT Tags.id, pid,
+		Tags.name, a.relativePath||\'/\'||i.name AS path FROM Tags
+		LEFT OUTER JOIN Images AS i ON i.id = Tags.icon
+		LEFT OUTER JOIN Albums AS a ON a.id = i.album
                          ORDER BY pid ASC');
 		$rows = $tagsQuery->fetchAll();
 		$tagsQuery = NULL;
