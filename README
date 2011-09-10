@@ -50,6 +50,14 @@ so apache can find it
    pointing to your ~/.thumbnails/large folder
    (or add a corresponding DocumentRoot to Apache configuration).
 
+   WARNING:
+   You must make that directory and the thumbnails withing world-accessable.
+   This is not the default since thumbnails are also created for your private
+   documents and pictures. Chaning the default permissions can leak PRIVATE
+   data!
+     chmod 0701 ~/.thumbnails/large
+     find  ~/.thumbnails/large -type f -exec chmod 0644 {} +
+
 Go to
 http://localhost/location-of-phpdigikam/albumview.php
 
