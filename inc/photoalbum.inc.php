@@ -88,7 +88,7 @@ class Photoalbum {
 	function __destruct() {
 		global $i18n;
 
-		echo '<br><br><p align="right" class="tiny">';
+		echo '<br /><br /><p align="right" class="tiny">';
 		
 		if(isset($_GET['profile'])) {
 			printf($i18n['debugFooter'], $this->_db->queryCount(),
@@ -184,7 +184,7 @@ class Photoalbum {
 				$arr = $pageData->imagesArray();
 				echo "<p style='margin-bottom: -40px'>";
 				echo $this->mkLink('image', $this->stripLeadingSlash($arr[0]['path']), 
-					"<img  id='slideshow_button' src='".$_config["selfUrl"]."/icons/slideshow.png'>", 						$param."&n=".(($page-1)*$_config['photosPerPage'])."&s=3");
+					"<img id='slideshow_button' src='".$_config["selfUrl"]."/icons/slideshow.png' />", 						$param."&n=".(($page-1)*$_config['photosPerPage'])."&s=3");
 				echo "</p>";
 		}
 
@@ -220,7 +220,7 @@ class Photoalbum {
 			echo "<a name='".$n."'/>";
 
 			$the_date=explode('-',substr($img['modificationDate'],0,10));
-			echo '<br><p class="tiny" style="margin-bottom: .6em">'.$the_date[2].'.'.$the_date[1].'.'.$the_date[0].', '.substr($img['modificationDate'],11,20).'</p>';
+			echo '<br /><p class="tiny" style="margin-bottom: .6em">'.$the_date[2].'.'.$the_date[1].'.'.$the_date[0].', '.substr($img['modificationDate'],11,20).'</p>';
 
 			echo "\t\t\t".$this->mkLink('image', $path,
 									"<img alt=\"{$path}\" src=\"{$_config['selfUrl']}/thumbnails/{$thumb}\" />", "{$param}&n={$n}&f=1")."\n";
@@ -300,7 +300,7 @@ class Photoalbum {
 
 		}
 
-		echo "<div align='right'><a href='".$up."'><img src='".$_config["selfUrl"]."/icons/up.png' alt='Up'></a><a href='".$_config["selfUrl"]."/".$_config["scriptname"]."'><img src='".$_config["selfUrl"]."/icons/home.gif' alt='Home'></a></div>";
+		echo "<div align='right'><a href='".$up."'><img src='".$_config["selfUrl"]."/icons/up.png' alt='Up' /></a><a href='".$_config["selfUrl"]."/".$_config["scriptname"]."'><img src='".$_config["selfUrl"]."/icons/home.gif' alt='Home' /></a></div>";
 
 		if(preg_match("/AVI\$|avi\$/", $url)) {
                 printf('<div align="center" style="height:680px;"><object data="%s/images/%s" type="video/x-msvideo" height="680" width="860">
@@ -309,14 +309,14 @@ class Photoalbum {
                           <param name="autoStart" value="1">
 			  <param name="controller" value="false">
                                 alt : <a href="%s/images/%s">%s</a>
-                        </object></div><br>
+                        </object></div><br />
 ', $_config["selfUrl"], $url, $_config["selfUrl"], $url, $_config["selfUrl"], $url, $url);
 		
 			$type='video';
 		} else {
  			print('<div align="center" style="height:640px;"><a href="'.$up.'">'."\n");
 			printf("<img id='image' style='height: 100%%;'  src=\"%s/images/%s\" /></a>
-				</div><br>\n", $_config["selfUrl"], $url);
+				</div><br />\n", $_config["selfUrl"], $url);
 			$type='image';
 		}
 
@@ -406,14 +406,14 @@ class Photoalbum {
 
 		}
 
-		echo "<div align='right'><a href='".$_config["selfUrl"]."/images/".$url."'><img src='".$_config["selfUrl"]."/icons/lookingglass.png'></a>&nbsp;";
+		echo "<div align='right'><a href='".$_config["selfUrl"]."/images/".$url."'><img src='".$_config["selfUrl"]."/icons/lookingglass.png' /></a>&nbsp;";
 		if(isset($albumPageRows) && isset($next)) {
 			$slideshow='';
 			if(!isset($_GET['s']) || $type=='video') {
 				$slideshow="&s=3";
-				echo $this->mkLink('image', $next, "<img id='slideshow_button' src='".$_config["selfUrl"]."/icons/slideshow.png'>", 						$context."&n=".($n+1).$slideshow);
+				echo $this->mkLink('image', $next, "<img id='slideshow_button' src='".$_config["selfUrl"]."/icons/slideshow.png' />", 						$context."&n=".($n+1).$slideshow);
 			} else {
-				echo $this->mkLink('image', $url, "<img id='slideshow_button' src='".$_config["selfUrl"]."/icons/slideshow.png'>", 					$context."&n=".($n).$slideshow);
+				echo $this->mkLink('image', $url, "<img id='slideshow_button' src='".$_config["selfUrl"]."/icons/slideshow.png' />", 					$context."&n=".($n).$slideshow);
 			}
 			if(isset($_GET['s']) && isset($next) && $type=='image') {
 				$s=$_GET['s'];
@@ -447,7 +447,7 @@ class Photoalbum {
 		printf("<h1>%s</h1>\n\n", $i18n['photoAlbums']);
 		foreach (array_reverse($rows) as $row) {
             if($row['name']) {
-                echo "<br><div style='width:300px;float:left;padding:50px;'>";
+                echo "<br /><div style='width:300px;float:left;padding:50px;'>";
                 $path = $this->stripLeadingSlash($row["path"]);
                 $thumb = $this->getThumbnailFileName($path);
                 $thumb_incl="<img style='vertical-align:middle;' src=\"".$_config['selfUrl']."/thumbnails/".$thumb."\" />";
@@ -692,7 +692,7 @@ class Photoalbum {
 		                if($child->path()) {
 	        	                $path = $this->stripLeadingSlash($child->path());
 		                        $thumb = $this->getThumbnailFileName($path);
-		                        $thumb_incl="<div id='t".$child->key()."' style='display:none'><br><img style='vertical-align:middle;position:relative;' src=\"".$_config['selfUrl']."/thumbnails/".$thumb."\" /><br>".$this->mkLink('tag', $child->key(), $child->data())."</div>";
+		                        $thumb_incl="<div id='t".$child->key()."' style='display:none'><br /><img style='vertical-align:middle;position:relative;' src=\"".$_config['selfUrl']."/thumbnails/".$thumb."\" /><br />".$this->mkLink('tag', $child->key(), $child->data())."</div>";
 	                	} else {
                         		$thumb_incl="";
                 		}
