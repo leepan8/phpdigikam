@@ -331,8 +331,7 @@ class Photoalbum {
 	                         FROM Images, Albums
 	                         WHERE Albums.id='.$albumId.' AND Albums.id=Images.album
 	                         AND Images.id NOT IN (SELECT imageId FROM ImageTags
-	                          WHERE imageId = Images.id
-	                          AND  '.$_config['restrictedTags'].')
+	                          WHERE '.$_config['restrictedTags'].')
 	                         ORDER BY Images.modificationDate LIMIT '.($n-1).', 3'
 	                )->fetchAll();
 		
@@ -351,8 +350,7 @@ class Photoalbum {
 	                         AND '.$_config['restrictedAlbums'].'
         	                 AND Albums.id=Images.album
 	                         AND Images.id NOT IN (SELECT imageId FROM ImageTags
-	                          WHERE imageId = Images.id
-	                          AND  '.$_config['restrictedTags'].')
+	                          WHERE '.$_config['restrictedTags'].')
 	                         ORDER BY Images.modificationDate LIMIT '.($n-1).', 3'
                 	)->fetchAll();
 
@@ -478,8 +476,7 @@ class Photoalbum {
 			 FROM Images, Albums 
 			 WHERE Albums.id='.$albumId.' AND Albums.id=Images.album
 			 AND Images.id NOT IN (SELECT imageid FROM ImageTags 
-			  WHERE imageid = Images.id
-			  AND  '.$_config['restrictedTags'].')
+			 WHERE '.$_config['restrictedTags'].')
 			 ORDER BY Images.modificationDate '.$this->limitClause()
 		)->fetchAll();
 	
@@ -488,8 +485,7 @@ class Photoalbum {
 			'SELECT COUNT(*) FROM Images, Albums
                          WHERE Albums.id='.$albumId.' AND Albums.id=Images.album
                          AND Images.id NOT IN (SELECT imageId FROM ImageTags 
-			  WHERE imageId = Images.id
-                          AND  '.$_config['restrictedTags'].')'
+                         WHERE '.$_config['restrictedTags'].')'
 		)->fetchColumn();
 	
 		if(count($numResults) > 0) {
@@ -582,8 +578,7 @@ class Photoalbum {
 			 AND '.$_config['restrictedAlbums'].'
 			 AND Albums.id=Images.album
 			 AND Images.id NOT IN (SELECT imageId FROM ImageTags 
-			  WHERE imageId = Images.id
-                          AND  '.$_config['restrictedTags'].')
+                         WHERE '.$_config['restrictedTags'].')
 			 ORDER BY Images.modificationDate '.$this->limitClause()
 		)->fetchAll();
 	
@@ -595,8 +590,7 @@ class Photoalbum {
 			 AND '.$_config['restrictedAlbums'].'
 			 AND Albums.id=Images.album 
 			 AND Images.id NOT IN (SELECT imageId FROM ImageTags 
-			  WHERE imageId = Images.id
-                          AND  '.$_config['restrictedTags'].')
+                         WHERE '.$_config['restrictedTags'].')
 '
 		)->fetchColumn();
 	
