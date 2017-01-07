@@ -91,3 +91,7 @@ Feel free to improve it :-)
 From Laurent:
 I adapted it to my own needs and made it work with Digikam 1.x. I hope it
 will work for you.
+
+from Matt:
+
+Updated to work with mysql database, and newer digikam database schema (currently 5.3.0)

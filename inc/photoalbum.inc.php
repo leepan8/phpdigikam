@@ -51,7 +51,7 @@ class Photoalbum {
 		require_once('tagtree.inc.php');
 
 		//Connect to database and load tag data
-		$this->_db = new InformativePDO('sqlite:/'.$_config['digikamDb']);
+                $this->_db = new InformativePDO($_config['digikamDb'],$_config['dbuser'],$_config['dbpass']);
 		$this->_tagTree = new TagTree($this->_db);
 
 		//Link to homepage only if not viewing image
@@ -196,10 +196,9 @@ class Photoalbum {
 			print "\t\t<td valign=\"top\" width=\"".$col_width."%\" align=\"center\">\n";
 
 			$thumb = $this->getThumbnailFileName($path);
-			$thumb_path = $_config['thumbnails'].$thumb;
+			$thumb_path = $_config['thumbnails'].'/'.$thumb;
 			if (!file_exists($thumb_path)) {
 				echo '<div id="wait'.$thumb.'" style="display:block;font-style: italic;">Generating thumbnail<span style="text-decoration: blink">...</span></div>';
-
 				$this->createthumb($_config['photosPath'].'/images/'.$path, $thumb_path, 256, 256);
 				echo "<script>document.getElementById('wait".$thumb."').style.display='none'</script>";
 			}
@@ -430,7 +429,7 @@ class Photoalbum {
 
 		$rows = $this->_db->query(
 			'SELECT Albums.id, Albums.relativePath, Albums.date,'.
-			' Albums.caption, Albums.collection, I.name,'.
+			' Albums.caption, Albums.collection, './/I.name,'.
 			' Albums.relativePath||\'/\'||I.name AS path'.
 			' FROM Albums LEFT OUTER JOIN Images AS I'.
 			' ON Albums.icon=I.id WHERE '.$_config['restrictedAlbums']
@@ -438,7 +437,7 @@ class Photoalbum {
 
 		printf("<h1>%s</h1>\n\n", $i18n['photoAlbums']);
 		foreach (array_reverse($rows) as $row) {
-			if ($row['name']) {
+			if ($row['relativePath']) {
 				echo "<br /><div style='width:300px;float:left;padding:50px;'>";
 				$path = $this->stripLeadingSlash($row["path"]);
 				$thumb = $this->getThumbnailFileName($path);
@@ -463,7 +462,7 @@ class Photoalbum {
 
 		//Get data of images on this page
 		$albumPageRows = $this->_db->query(
-			'SELECT Albums.relativePath||\'/\'||Images.name AS path, Albums.relativePath,'.
+			'SELECT CONCAT(Albums.relativePath,\'/\',Images.name) AS path, Albums.relativePath,'.
 			' Images.id, Images.name, Images.modificationDate'.
 			' FROM Images, Albums'.
 			' WHERE Albums.id='.$albumId.' AND Albums.id=Images.album'.
@@ -564,7 +563,7 @@ class Photoalbum {
 
 		//Get data of images on this page
 		$albumPageRows = $this->_db->query(
-			'SELECT Albums.relativePath||\'/\'||Images.name AS path, Images.id,'.
+                        'SELECT CONCAT(Albums.relativePath,\'/\',Images.name) AS path, Images.id,'.
 			' Images.name, Images.modificationDate FROM Images, Albums, ImageTags'.
 			' WHERE Images.id = ImageTags.imageid'.
 			' AND '.$whereClause.
@@ -713,7 +712,6 @@ class Photoalbum {
 		flush();
 		ob_flush();
 		$system = $name;
-
 		if (preg_match("/jpg\$|jpeg\$|JPG\$|JPEG\$/", $system)) {
 			$src_img = imagecreatefromjpeg($name);
 		} elseif (preg_match("/png\$/", $system)) {

@@ -17,13 +17,13 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 */
-// C O N F I G / / / / / / / / / / / /
+// C O N F I G / / / / / / / / / / / / 
 
 //Language
 require_once('lang/en.lang.php');
 
 //Albums to hide
-$_config['restrictedAlbums'] = "Albums.id NOT IN (1, 3, 5, 15, 50, 76, 103, 116, 159, 186)";
+$_config['restrictedAlbums'] = "Albums.id NOT IN (1,999)";
 
 // tags to hide
 $_config['restrictedTags'] = "tagid=154";
@@ -31,21 +31,23 @@ $_config['restrictedTags'] = "tagid=154";
 //Paths
 
 // The database file
-$_config['digikamDb'] = "/Users/lolo/Sites/pictures/images/digikam4.db";
+$_config['digikamDb'] = "mysql:host=localhost;port=3306;dbname=digikam";
+$_config['dbuser'] = '';
+$_config['dbpass'] = '';
 
 // Where the photos are
-$_config['photosPath'] = "/Volumes/Trop Dur/Images/Library/";
+$_config['photosPath'] = "/var/www/phpdigikam";
 
 // Where the thumbnails are (if you copy them from ~/.thumbnails/large)
 // or where they will be created
-$_config['thumbnails'] = "/Volumes/Trop Dur/Images/.library-thumbs/";
+$_config['thumbnails'] = "thumbnails/";
 
 // Utilities
 $_config['convertBin'] = "/usr/bin/convert";
 $_config['exifBin'] = "/usr/bin/exif";
 
 // Leading path of the actual photo directory to compute the correct thumb hash
-$_config['thumbHashPath'] = "/home/shaman/Pictures/Library2/";
+$_config['thumbHashPath'] = "/data/gallery/";
 
 //Image and thumbnail sizes
 $_config['thumbSize'] = "240";
@@ -54,7 +56,7 @@ $_config['imageSize'] = "720";
 //Layout
 $_config['numCols'] = "4";
 $_config['photosPerPage'] = "40";
-// / / / / / / / / / / / / / / / / / /
+// / / / / / / / / / / / / / / / / / / 
 
 //These should be automatically correct
 $_config['selfDir']=substr($_SERVER['SCRIPT_FILENAME'], 0,
