@@ -4,6 +4,8 @@ Copyright 2006-2011
 Author: Thorben Kröger <thorbenk@gmx.net>
         Laurent Bovet <laurent.bovet@windmaster.ch>
 
+Updated 2017 Matt Martin
+
 This file is part of phpdigikam
 
 phpdigikam is free software; you can redistribute it
@@ -429,26 +431,44 @@ class Photoalbum {
 
 		$rows = $this->_db->query(
 			'SELECT Albums.id, Albums.relativePath, Albums.date,'.
-			' Albums.caption, Albums.collection, './/I.name,'.
-			' Albums.relativePath||\'/\'||I.name AS path'.
+			' Albums.caption, Albums.collection, I.name,'.
+			' CONCAT(Albums.relativePath,\'/\',I.name) AS path'.
+                        ' , (SELECT COUNT(*) FROM Images AS IM WHERE IM.album=Albums.id) as albcnt'.
 			' FROM Albums LEFT OUTER JOIN Images AS I'.
-			' ON Albums.icon=I.id WHERE '.$_config['restrictedAlbums']
+			' ON Albums.icon=I.id WHERE '.$_config['restrictedAlbums'].
+			' ORDER BY Albums.relativePath DESC'
 		)->fetchAll();
 
 		printf("<h1>%s</h1>\n\n", $i18n['photoAlbums']);
+                $curfold="";
+		echo "<ul>\n";
 		foreach (array_reverse($rows) as $row) {
 			if ($row['relativePath']) {
-				echo "<br /><div style='width:300px;float:left;padding:50px;'>";
+				$fold=explode("/",$row['relativePath'])[1];
+				if (strcmp($fold,$curfold) !== 0) { 
+                                   	if (strlen($curfold)>0) echo "</ul></li>\n";
+			  		echo "<li><span class=collapse>".$fold."</span><ul>";
+					$curfold=$fold;
+				}
+				if ($row["albcnt"]>0) {
+				echo "<li class=hidden ><span class=collapse >";
 				$path = $this->stripLeadingSlash($row["path"]);
-				$thumb = $this->getThumbnailFileName($path);
-				$thumb_incl = "<img style='vertical-align:middle;' src=\"".$_config['selfUrl']."/thumbnails/".$thumb."\" />";
-
+				if (strpos(substr($path,-5),'.')!==false) {
+					$thumb = $this->getThumbnailFileName($path);
+					$thumb_incl = "<img style='vertical-align:middle;' src=\"".$_config['selfUrl']."/thumbnails/".$thumb."\" height=60px/>";
+				} else $thumb_incl = "";
+				if (strlen($row['relativePath'])==1) 
+					$dispname='Root';
+				else 
+					$dispname=$this->stripLeadingSlash(str_replace($curfold.'/','',$row['relativePath']));
 				echo $this->mkLink('album', $row['id'],
-					$thumb_incl." <div>".$this->stripLeadingSlash($row['relativePath'])."</div>");
-				echo "</div>";
+					$thumb_incl." <span>".$dispname."&nbsp(".$row['albcnt'].")</span>");
+				echo "</span></li>\n";
+				}//albcnt
 			}
 			echo "\n\n";
 		}
+		echo "</li></ul>\n";
 	}
 
 	/**
@@ -478,10 +498,9 @@ class Photoalbum {
 			' AND Images.id NOT IN (SELECT imageId FROM ImageTags'.
 			' WHERE '.$_config['restrictedTags'].')'
 		)->fetchColumn();
-
-		if (count($numResults) > 0) {
-			printf('<h2>%s '.$i18n['lq'].'%s'.$i18n['rq']."</h2>\n",
-				$i18n['imagesInAlbum'],
+		if ($numResults > 0) {
+			printf('<h2>%d %s '.$i18n['lq'].'%s'.$i18n['rq']."</h2>\n",
+				$numResults, $i18n['imagesInAlbum'],
 				$this->stripLeadingSlash($albumPageRows[0]['relativePath']));
 		}
 		$this->thumbnailPage( new ImagesPageData($albumPageRows, $numResults), "a={$albumId}" );
@@ -714,6 +733,21 @@ class Photoalbum {
 		$system = $name;
 		if (preg_match("/jpg\$|jpeg\$|JPG\$|JPEG\$/", $system)) {
 			$src_img = imagecreatefromjpeg($name);
+        		$exif = exif_read_data($name);
+        		if ($src_img && $exif && isset($exif['Orientation']))
+       			{
+            			$ort = $exif['Orientation'];
+
+            			if ($ort == 6 || $ort == 5)
+                			$src_img = imagerotate($src_img, 270, null);
+            			if ($ort == 3 || $ort == 4)
+                			$src_img = imagerotate($src_img, 180, null);
+            			if ($ort == 8 || $ort == 7)
+                			$src_img = imagerotate($src_img, 90, null);
+
+            			if ($ort == 5 || $ort == 4 || $ort == 7)
+                			imageflip($src_img, IMG_FLIP_HORIZONTAL);
+        		}
 		} elseif (preg_match("/png\$/", $system)) {
 			$src_img = imagecreatefrompng($name);
 		} else {
