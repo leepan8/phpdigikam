@@ -45,7 +45,7 @@ class Photoalbum {
 			return;
 		}
 
-		include('inc/header.inc.html');
+		if (!isset($_GET['partialpage'])) include('inc/header.inc.html');
 
 		require_once('config.inc.php');
 		require_once('informativepdo.inc.php');
@@ -57,7 +57,7 @@ class Photoalbum {
 		$this->_tagTree = new TagTree($this->_db);
 
 		//Link to homepage only if not viewing image
-		if (!isset($_GET['image'])) {
+		if (!isset($_GET['image']) && !isset($_GET['partialpage'])) {
 			print("<p style=\"float:right\">\n");
 			printf("\t<a href=\"%s/%s\">", $_config["selfUrl"], $_config["scriptname"]);
 			printf("<img src=\"%s/icons/home.gif\" alt=\"Home\" border=\"0\" /></a>\n</p>\n\n",
@@ -71,10 +71,12 @@ class Photoalbum {
 			$this->htmlTagPage($_GET['tag']);
 		} elseif (isset($_GET['image'])) {
 			$this->htmlFullsizeImagePage($_GET['image']);
+                } elseif (isset($_GET['randomthumb'])) {
+                        $this->htmlRandomThumbPage();
 		} elseif (isset($_GET['update'])) {
 			require_once('inc/shellscript.inc.php');
 			new UpdateScript($this->_db);
-		} else {
+		} else { // Otherwise assume top level index page
 			echo '<table width="100%"><tr><td align="left" valign=top>';
 			$this->htmlAlbumList();
 			echo '</td><td width="4%">&nbsp;</td><td align="left" valign="top">';
@@ -86,16 +88,18 @@ class Photoalbum {
 	function __destruct() {
 		global $i18n;
 
-		echo '<br /><br /><p align="right" class="tiny">';
+		if (!isset($_GET['partialpage'])) {
+			echo '<br /><br /><p align="right" class="tiny">';
 
-		if (isset($_GET['profile'])) {
-			printf($i18n['debugFooter'], $this->_db->queryCount(),
-						round($this->_stopwatch->stop(), 2));
+			if (isset($_GET['profile'])) {
+				printf($i18n['debugFooter'], $this->_db->queryCount(),
+							round($this->_stopwatch->stop(), 2));
+			}
+
+			echo "</p>\n";
+
+			include('footer.inc.html');
 		}
-
-		echo "</p>\n";
-
-		include('footer.inc.html');
 	}
 
 	/**
@@ -125,6 +129,9 @@ class Photoalbum {
 		} elseif (preg_match('@/setup@U',
 						$_SERVER['REQUEST_URI'], $matches) > 0) {
 			$_GET['setup'] = true;
+		} elseif (preg_match('@/randomthumb@U',$_SERVER['REQUEST_URI'], $matches) > 0) {
+			$_GET['randomthumb'] = true;
+			$_GET['partialpage'] = true;
 		}
 
 		//Check filename for page_number.html
@@ -147,10 +154,48 @@ class Photoalbum {
 		$rows = $imageTags->fetchAll();
 
 		echo "\n<!--ImageTags //-->\n<table>\n\t<tr>\n\t\t<td align=\"left\">\n";
+                $pplstr="";
+		$otherstr="";
 		foreach ($rows as $row) {
-			echo "\t\t\t".$this->_tagTree->htmlPathToTag($row['id'])."<br />\n";
+			$tagstr=$this->_tagTree->htmlPathToTag($row['id']);
+			if (strpos($tagstr,"People")!==false) {
+				$person=substr($tagstr,strpos($tagstr,"&gt")+10,-4);
+				$pplstr=$pplstr.$person.",";
+			}	
+			else $otherstr=$otherstr."\t\t\t".$tagstr."<br />\n";
 		}
+		if (strlen($pplstr)>0) echo "<p class=tiny><b>".$pplstr."</b></p><br>+";
+		echo $otherstr;
 		echo "\t\t</td>\n\t</tr>\n</table>\n\n";
+	}
+
+	private function thumbnailCell(&$img, $num, $param="", $quiet=0 ) {
+		global $_config;
+		$path = $this->stripLeadingSlash($img['path']);
+		$thumb = $this->getThumbnailFileName($path);
+		$thumb_path = $_config['thumbnails'].'/'.$thumb;
+		if (!file_exists($thumb_path)) {
+			if (!$quiet) 
+				echo '<div id="wait'.$thumb.'" style="display:block;font-style: italic;">Generating thumbnail<span style="text-decoration: blink">...</span></div>';
+			$this->createthumb($_config['photosPath'].'/images/'.$path, $thumb_path, 256, 256);
+			if (!$quiet) 
+				echo "<script>document.getElementById('wait".$thumb."').style.display='none'</script>";
+		}
+		$page = 1;
+		if (isset($_GET["page"])) {
+			$page = $_GET["page"];
+		}
+
+		$n = (($page - 1) * $_config['photosPerPage']) + $num;
+		//echo "<a name='".$n."'/>";
+
+		$the_date = explode('-', substr($img['modificationDate'], 0, 10));
+		//<br />		
+		echo '<p class="tiny" style="margin-bottom: .6em">'.$the_date[2].'.'.$the_date[1].'.'.$the_date[0].', '.substr($img['modificationDate'], 11, 20)."</p>\n";
+
+		echo "\t\t\t".$this->mkLink('image', $path,"<img alt=\"{$path}\" src=\"{$_config['selfUrl']}/thumbnails/{$thumb}\" />", "{$param}&n={$n}&f=1")."\n";
+
+		$this->htmlTagsForImage($img['id']);
 	}
 
 	/**
@@ -192,34 +237,10 @@ class Photoalbum {
 				print "\t</tr>\n\t<tr>\n";
 			}
 
-			$path = $this->stripLeadingSlash($img['path']);
-
 			$col_width = round(100 / $numCols);
 			print "\t\t<td valign=\"top\" width=\"".$col_width."%\" align=\"center\">\n";
 
-			$thumb = $this->getThumbnailFileName($path);
-			$thumb_path = $_config['thumbnails'].'/'.$thumb;
-			if (!file_exists($thumb_path)) {
-				echo '<div id="wait'.$thumb.'" style="display:block;font-style: italic;">Generating thumbnail<span style="text-decoration: blink">...</span></div>';
-				$this->createthumb($_config['photosPath'].'/images/'.$path, $thumb_path, 256, 256);
-				echo "<script>document.getElementById('wait".$thumb."').style.display='none'</script>";
-			}
-
-			$page = 1;
-			if (isset($_GET["page"])) {
-				$page = $_GET["page"];
-			}
-
-			$n = (($page - 1) * $_config['photosPerPage']) + $i;
-			echo "<a name='".$n."'/>";
-
-			$the_date = explode('-', substr($img['modificationDate'], 0, 10));
-			echo '<br /><p class="tiny" style="margin-bottom: .6em">'.$the_date[2].'.'.$the_date[1].'.'.$the_date[0].', '.substr($img['modificationDate'], 11, 20).'</p>';
-
-			echo "\t\t\t".$this->mkLink('image', $path,
-									"<img alt=\"{$path}\" src=\"{$_config['selfUrl']}/thumbnails/{$thumb}\" />", "{$param}&n={$n}&f=1")."\n";
-
-			$this->htmlTagsForImage($img['id']);
+			$this->thumbnailCell($img,$i,$param);
 
 			print "\t\t</td>\n";
 
@@ -238,7 +259,7 @@ class Photoalbum {
 
 		$this->pageNavigation($pageData);
 	}
-
+	
 	/**
 	 * Examine the $pageData (of type ImagesPageData) and generate the
 	 * html code for the page navigation bar
@@ -266,6 +287,7 @@ class Photoalbum {
 			echo "<a href=\"{$this->hrefWithPage($page + 1)}\">&nbsp; &gt;</a>\n";
 		echo "\n";
 	}
+
 
 	/**
 	 * Generate the html code to display the full-sized image with
@@ -320,7 +342,7 @@ class Photoalbum {
 		if (isset($_GET['a'])) {
 			$albumId = $_GET['a'];
 			$albumPageRows = $this->_db->query(
-				'SELECT Albums.relativePath||\'/\'||Images.name AS path, Albums.relativePath,'.
+				'SELECT CONCAT(Albums.relativePath,\'/\',Images.name) AS path, Albums.relativePath,'.
 				' Images.id, Images.name, Images.modificationDate'.
 				' FROM Images, Albums'.
 				' WHERE Albums.id='.$albumId.' AND Albums.id=Images.album'.
@@ -395,6 +417,8 @@ class Photoalbum {
 			printf("<script>function next() { document.getElementById('image').src='%s/images/%s'; }</script>", $_config["selfUrl"], $next);
 			printf("<script>function prev() { document.getElementById('image').src='%s/images/%s'; }</script>", $_config["selfUrl"], $prev);
 			echo "<script>function slideshow(url, s) { window.location=url; }</script>";
+			echo "<script>function gotkey(k){ if (k.keycode = 39) next();};";
+			echo "document.addEventListener('keyup', gotkey, false);</script>";
 		}
 
 		echo "<div align='right'><a href='".$_config["selfUrl"]."/images/".$url."'><img src='".$_config["selfUrl"]."/icons/lookingglass.png' /></a>&nbsp;";
@@ -451,12 +475,13 @@ class Photoalbum {
 					$curfold=$fold;
 				}
 				if ($row["albcnt"]>0) {
-				echo "<li class=hidden ><span class=collapse >";
+				echo "<li ><span class=collapse ><div width=200px>";// div is debug element
 				$path = $this->stripLeadingSlash($row["path"]);
 				if (strpos(substr($path,-5),'.')!==false) {
 					$thumb = $this->getThumbnailFileName($path);
-					$thumb_incl = "<img style='vertical-align:middle;' src=\"".$_config['selfUrl']."/thumbnails/".$thumb."\" height=60px/>";
+					$thumb_incl = "<img style='vertical-align:middle;' src=\"".$_config['selfUrl']."/thumbnails/".$thumb."\" height=50px/>";
 				} else $thumb_incl = "";
+				echo "</div>";//debug
 				if (strlen($row['relativePath'])==1) 
 					$dispname='Root';
 				else 
@@ -469,6 +494,9 @@ class Photoalbum {
 			echo "\n\n";
 		}
 		echo "</li></ul>\n";
+	echo "<script>$(document).ready(function(){";
+	echo "  $('.xcollapse').toggle();";
+	echo "});</script>";
 	}
 
 	/**
@@ -503,7 +531,33 @@ class Photoalbum {
 				$numResults, $i18n['imagesInAlbum'],
 				$this->stripLeadingSlash($albumPageRows[0]['relativePath']));
 		}
-		$this->thumbnailPage( new ImagesPageData($albumPageRows, $numResults), "a={$albumId}" );
+		$thumbpgdat = new ImagesPageData($albumPageRows, $numResults);
+		$this->thumbnailPage( $thumbpgdat, "a={$albumId}" );
+	}
+
+	/**
+	 * Display all images in album with id $albumId as a paged thumbnail
+	 * page
+	 */
+	private function htmlRandomThumbPage() {
+		global $_db;
+		global $i18n;
+		global $_config;
+
+		//Get data of images on this page
+
+		$albumPageRows = $this->_db->query(
+			'SELECT CONCAT(Albums.relativePath,\'/\',Images.name) AS path, Albums.relativePath,'.
+			' Images.id, Images.name, Images.modificationDate, ii.rating, Albums.id as albumid'.
+			' FROM Images, Albums, imageinformation as ii'.
+			' WHERE Albums.id=Images.album AND Images.id=ii.imageid AND ii.rating>1'.
+			' AND Images.id NOT IN (SELECT imageid FROM ImageTags'.
+			' WHERE '.$_config['restrictedTags'].')'.
+			' ORDER BY RAND() LIMIT 1'
+		)->fetchAll();
+		printf("%s<br>\n",$this->mkLink('album',$albumPageRows[0]['albumid'],$this->stripLeadingSlash($albumPageRows[0]['relativePath'])));
+
+		$this->thumbnailCell( $albumPageRows[0],1,"",1);
 	}
 
 	/**
@@ -698,7 +752,8 @@ class Photoalbum {
 		//Go through all ids
 		echo str_repeat("\t", $level)."<ul>\n";
 		foreach ($node->children() as $child) {
-			if (true || $this->hasImagesWithTag($child->key())) {
+			//if (true || $this->hasImagesWithTag($child->key())) {
+			if ($this->hasImagesWithTag($child->key())) {
 				if ($child->path()) {
 					$path = $this->stripLeadingSlash($child->path());
 					$thumb = $this->getThumbnailFileName($path);
@@ -708,7 +763,7 @@ class Photoalbum {
 				}
 
 				echo str_repeat("\t", $level + 1);
-				echo '<li onmouseover="show(\'t'.$child->key().'\');" onmouseout="hide(\'t'.$child->key().'\');">'.$this->mkLink('tag', $child->key(), $child->data()." ".$thumb_incl)."</li>\n";
+				echo '<li onmouseover="show(\'t'.$child->key().'\');" onmouseout="hide(\'t'.$child->key().'\');"><span class=collapse>'.$this->mkLink('tag', $child->key(), $child->data()." ".$thumb_incl)."</span></li>\n";
 				$this->htmlTagTreeRecursive($child, $level + 1);
 			}
 		}
