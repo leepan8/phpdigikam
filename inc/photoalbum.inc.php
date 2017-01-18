@@ -58,10 +58,18 @@ class Photoalbum {
 
 		//Link to homepage only if not viewing image
 		if (!isset($_GET['image']) && !isset($_GET['partialpage'])) {
-			print("<p style=\"float:right\">\n");
-			printf("\t<a href=\"%s/%s\">", $_config["selfUrl"], $_config["scriptname"]);
-			printf("<img src=\"%s/icons/home.gif\" alt=\"Home\" border=\"0\" /></a>\n</p>\n\n",
-			 $_config["selfUrl"]);
+			$lnkstr=$_config["selfUrl"]."/".$_config["scriptname"].'?minRating=';
+			printf("<table width=100%><tr><td width=80%><b>%s</b></td><td><p style=\"float:right\">\n",$_config['AlbumTitle']);
+			printf("\t<a href=\"%s\">", $lnkstr.$_GET['minRating']);
+			printf("<img src=\"%s/icons/home.gif\" alt=\"Home\" border=\"0\" /></a>",$_config["selfUrl"]);
+			printf("\tMin Rating:");
+			foreach( array('-1','1','2','3','4','5') as $rtg) {
+				if ($rtg=='-1') $vrtg='All';
+				else $vrtg=$rtg;
+				if ($rtg==$_GET['minRating']) $vrtg="<font color=red>".$vrtg."</font>";
+				printf("&nbsp<a href=\"".$_SERVER['PHP_SELF'].'?minRating='.$rtg."\">".$vrtg."</a>");
+			};
+			printf("\n</p></td></tr></table>\n\n");
 		}
 
 		//Call the different album functions
@@ -77,9 +85,9 @@ class Photoalbum {
 			require_once('inc/shellscript.inc.php');
 			new UpdateScript($this->_db);
 		} else { // Otherwise assume top level index page
-			echo '<table width="100%"><tr><td align="left" valign=top>';
+			echo '<table width="100%"><tr><td width=60% align="left" valign=top>';
 			$this->htmlAlbumList();
-			echo '</td><td width="4%">&nbsp;</td><td align="left" valign="top">';
+			echo '</td><td width="4%">&nbsp;</td><td width=35% align="left" valign="top">';
 			$this->htmlTagTree();
 			echo '</td></tr></table>';
 		}
@@ -133,7 +141,7 @@ class Photoalbum {
 			$_GET['randomthumb'] = true;
 			$_GET['partialpage'] = true;
 		}
-
+		if (!isset($_GET['minRating'])) $_GET['minRating'] = "-1";
 		//Check filename for page_number.html
 		if (preg_match('@/page_([0-9]+).html@',
 			$_SERVER['REQUEST_URI'], $matches) > 0) {
@@ -141,6 +149,16 @@ class Photoalbum {
 		}
 	}
 
+/* Show image rating */
+        private function htmlImageRating($imageId) {
+                $imageRt = $this->_db->query('SELECT rating from imageinformation where imageid='.$imageId);
+		$rows=$imageRt->fetchAll();
+		foreach ($rows as $row) {
+			if ($row[0]>0) 
+				echo "<p style='margin-top:-0.2em;margin-bottom:-1em'><font size=+2>".str_repeat("*",$row[0])."</font></p>\n";
+		};
+	}
+ 
 	/**
 	 * Print all the image tags belonging to the image with $imageId
 	 * for the thumbnail view
@@ -153,7 +171,7 @@ class Photoalbum {
 		);
 		$rows = $imageTags->fetchAll();
 
-		echo "\n<!--ImageTags //-->\n<table>\n\t<tr>\n\t\t<td align=\"left\">\n";
+		echo "\n<!--ImageTags //-->\n<table style='margin-top:0'>\n\t<tr>\n\t\t<td align=\"left\">\n";
                 $pplstr="";
 		$otherstr="";
 		foreach ($rows as $row) {
@@ -162,9 +180,12 @@ class Photoalbum {
 				$person=substr($tagstr,strpos($tagstr,"&gt")+10,-4);
 				$pplstr=$pplstr.$person.",";
 			}	
-			else $otherstr=$otherstr."\t\t\t".$tagstr."<br />\n";
+			else {
+				$tagstr=str_replace("_Digikam_Internal_Tags_","Digikam",$tagstr);
+				$otherstr=$otherstr."\t\t\t".$tagstr."<br />\n";
+				}
 		}
-		if (strlen($pplstr)>0) echo "<p class=tiny><b>".$pplstr."</b></p><br>+";
+		if (strlen($pplstr)>0) echo "<p class=tiny><b>".$pplstr."</b></p><br>";
 		echo $otherstr;
 		echo "\t\t</td>\n\t</tr>\n</table>\n\n";
 	}
@@ -194,6 +215,7 @@ class Photoalbum {
 		echo '<p class="tiny" style="margin-bottom: .6em">'.$the_date[2].'.'.$the_date[1].'.'.$the_date[0].', '.substr($img['modificationDate'], 11, 20)."</p>\n";
 
 		echo "\t\t\t".$this->mkLink('image', $path,"<img alt=\"{$path}\" src=\"{$_config['selfUrl']}/thumbnails/{$thumb}\" />", "{$param}&n={$n}&f=1")."\n";
+		$this->htmlImageRating($img['id']);
 
 		$this->htmlTagsForImage($img['id']);
 	}
@@ -331,7 +353,7 @@ class Photoalbum {
 			$type = 'video';
 		} else {
  			print('<div align="center" style="height:640px;"><a href="'.$up.'">'."\n");
-			printf("<img id='image' style='height: 100%%;' src=\"%s/images/%s\" /></a>".
+			printf("<img id='image' style='height: 100%%;image-orientation: from-image;' src=\"%s/images/%s\" /></a>".
 			       "</div><br />\n", $_config["selfUrl"], $url);
 			$type = 'image';
 		}
@@ -343,9 +365,10 @@ class Photoalbum {
 			$albumId = $_GET['a'];
 			$albumPageRows = $this->_db->query(
 				'SELECT CONCAT(Albums.relativePath,\'/\',Images.name) AS path, Albums.relativePath,'.
-				' Images.id, Images.name, Images.modificationDate'.
-				' FROM Images, Albums'.
-				' WHERE Albums.id='.$albumId.' AND Albums.id=Images.album'.
+				' Images.id, Images.name, Images.modificationDate, ii.Rating'.
+				' FROM Images, Albums, ImageInformation as ii'.
+				' WHERE Albums.id='.$albumId.' AND Albums.id=Images.album AND Images.Id=ii.imageid'.
+				' AND Rating > 2'.
 				' AND Images.id NOT IN (SELECT imageId FROM ImageTags'.
 				' WHERE '.$_config['restrictedTags'].')'.
 				' ORDER BY Images.modificationDate LIMIT '.($n - 1).', 3'
@@ -391,7 +414,7 @@ class Photoalbum {
 			echo '<table width="90%" style="margin-top: -2em; margin-bottom: -2em;"><tr><td width="30%">';
 			if ($prev) {
 				echo "\t\t\t".$this->mkLink('image', $prev,
-					"&lt;&nbsp;", "{$context}&n=".($n - 1), "onclick='prev()'")."\n";
+					"&lt;&nbsp;", "{$context}&n=".($n - 1), "id='previmg''")."\n";# onclick='prev()
 
 				// preload prev image (very likely to have abeen already loaded, though)
 				if (!preg_match("/AVI\$|avi\$/", $prev)) {
@@ -405,7 +428,7 @@ class Photoalbum {
 			echo '</td><td width="30%">';
 			if (isset($next)) {
 				echo "\t\t\t".$this->mkLink('image', $next,
-					"&nbsp;&gt;", "{$context}&n=".($n + 1), "onclick='next()'")."\n";
+					"&nbsp;&gt;", "{$context}&n=".($n + 1), "id='nextimg' ")."\n";#onclick='next()'
 
 				// preload next image
 				if (!preg_match("/AVI\$|avi\$/", $next)) {
@@ -417,7 +440,10 @@ class Photoalbum {
 			printf("<script>function next() { document.getElementById('image').src='%s/images/%s'; }</script>", $_config["selfUrl"], $next);
 			printf("<script>function prev() { document.getElementById('image').src='%s/images/%s'; }</script>", $_config["selfUrl"], $prev);
 			echo "<script>function slideshow(url, s) { window.location=url; }</script>";
-			echo "<script>function gotkey(k){ if (k.keycode = 39) next();};";
+			echo "<script>";
+			echo "function gotkey(k){ if (k.keycode = 39) document.getElementById('nextimg').click();";
+			echo "if (k.keycode = 37) document.getElementById('previmg').click();";
+			echo "};";
 			echo "document.addEventListener('keyup', gotkey, false);</script>";
 		}
 
@@ -458,16 +484,17 @@ class Photoalbum {
 			' Albums.caption, Albums.collection, I.name,'.
 			' CONCAT(Albums.relativePath,\'/\',I.name) AS path'.
                         ' , (SELECT COUNT(*) FROM Images AS IM WHERE IM.album=Albums.id) as albcnt'.
+                        ' , (SELECT COUNT(*) FROM Images AS IM, ImageInformation as ii WHERE IM.album=Albums.id AND Im.id=ii.imageid AND ii.Rating>='.$_GET['minRating'].') as albfiltcnt'.
 			' FROM Albums LEFT OUTER JOIN Images AS I'.
 			' ON Albums.icon=I.id WHERE '.$_config['restrictedAlbums'].
 			' ORDER BY Albums.relativePath DESC'
 		)->fetchAll();
 
-		printf("<h1>%s</h1>\n\n", $i18n['photoAlbums']);
+		printf("<h2>%s</h2>\n\n", $i18n['photoAlbums']);
                 $curfold="";
 		echo "<ul>\n";
 		foreach (array_reverse($rows) as $row) {
-			if ($row['relativePath']) {
+			if ($row['relativePath'] && $row['albfiltcnt']>0) {
 				$fold=explode("/",$row['relativePath'])[1];
 				if (strcmp($fold,$curfold) !== 0) { 
                                    	if (strlen($curfold)>0) echo "</ul></li>\n";
@@ -487,7 +514,7 @@ class Photoalbum {
 				else 
 					$dispname=$this->stripLeadingSlash(str_replace($curfold.'/','',$row['relativePath']));
 				echo $this->mkLink('album', $row['id'],
-					$thumb_incl." <span>".$dispname."&nbsp(".$row['albcnt'].")</span>");
+					$thumb_incl." <span>".$dispname."&nbsp(".$row['albfiltcnt'].'/'.$row['albcnt'].")</span>","minRating=".$_GET['minRating']);
 				echo "</span></li>\n";
 				}//albcnt
 			}
@@ -511,9 +538,10 @@ class Photoalbum {
 		//Get data of images on this page
 		$albumPageRows = $this->_db->query(
 			'SELECT CONCAT(Albums.relativePath,\'/\',Images.name) AS path, Albums.relativePath,'.
-			' Images.id, Images.name, Images.modificationDate'.
-			' FROM Images, Albums'.
-			' WHERE Albums.id='.$albumId.' AND Albums.id=Images.album'.
+			' Images.id, Images.name, Images.modificationDate, ii.Rating '.
+			' FROM Images, Albums, ImageInformation as ii'.
+			' WHERE Albums.id='.$albumId.' AND Albums.id=Images.album AND Images.id=ii.imageid'.
+			' AND Rating>='.$_GET['minRating'].
 			' AND Images.id NOT IN (SELECT imageid FROM ImageTags'.
 			' WHERE '.$_config['restrictedTags'].')'.
 			' ORDER BY Images.modificationDate '.$this->limitClause()
@@ -526,12 +554,21 @@ class Photoalbum {
 			' AND Images.id NOT IN (SELECT imageId FROM ImageTags'.
 			' WHERE '.$_config['restrictedTags'].')'
 		)->fetchColumn();
+		$numfiltResults = $this->_db->query(
+			'SELECT COUNT(*) FROM Images, Albums, ImageInformation as ii'.
+			' WHERE Albums.id='.$albumId.' AND Albums.id=Images.album AND Images.id=ii.imageid'.
+			' AND ii.Rating>='.$_GET['minRating'].
+			' AND Images.id NOT IN (SELECT imageId FROM ImageTags'.
+			' WHERE '.$_config['restrictedTags'].')'
+		)->fetchColumn();
 		if ($numResults > 0) {
-			printf('<h2>%d %s '.$i18n['lq'].'%s'.$i18n['rq']."</h2>\n",
+			if ($_GET['minRating']<>"-1") $filtcntstr="<font size=-1>( %d filt)</font>";
+			else $filtcntstr="";
+			printf('<h2>%d %s '.$i18n['lq'].'%s'.$i18n['rq'].$filtcntstr."</h2>\n",
 				$numResults, $i18n['imagesInAlbum'],
-				$this->stripLeadingSlash($albumPageRows[0]['relativePath']));
+				$this->stripLeadingSlash($albumPageRows[0]['relativePath']),$numfiltResults);
 		}
-		$thumbpgdat = new ImagesPageData($albumPageRows, $numResults);
+		$thumbpgdat = new ImagesPageData($albumPageRows, $numfiltResults);
 		$this->thumbnailPage( $thumbpgdat, "a={$albumId}" );
 	}
 
@@ -637,11 +674,12 @@ class Photoalbum {
 		//Get data of images on this page
 		$albumPageRows = $this->_db->query(
                         'SELECT CONCAT(Albums.relativePath,\'/\',Images.name) AS path, Images.id,'.
-			' Images.name, Images.modificationDate FROM Images, Albums, ImageTags'.
+			' Images.name, Images.modificationDate FROM Images, Albums, ImageTags, ImageInformation as ii'.
 			' WHERE Images.id = ImageTags.imageid'.
 			' AND '.$whereClause.
 			' AND '.$_config['restrictedAlbums'].
-			' AND Albums.id = Images.album'.
+			' AND Albums.id = Images.album AND Images.id=ii.imageid'.
+			' AND Rating>='.$_GET['minRating'].
 			' AND Images.id NOT IN (SELECT imageId FROM ImageTags'.
 			' WHERE '.$_config['restrictedTags'].')'.
 			' ORDER BY Images.modificationDate '.$this->limitClause()
@@ -649,11 +687,12 @@ class Photoalbum {
 
 		//Number of images total in this "album"
 		$numResults = $this->_db->query(
-			'SELECT COUNT(*) FROM Images, Albums, ImageTags'.
+			'SELECT COUNT(*) FROM Images, Albums, ImageTags, ImageInformation as ii'.
 			' WHERE Images.id = ImageTags.imageid'.
 			' AND '.$whereClause.
 			' AND '.$_config['restrictedAlbums'].
-			' AND Albums.id = Images.album'.
+			' AND Albums.id = Images.album AND Images.id=ii.imageid'.
+			' AND Rating>='.$_GET['minRating'].
 			' AND Images.id NOT IN (SELECT imageId FROM ImageTags'.
 			' WHERE '.$_config['restrictedTags'].')'
 		)->fetchColumn();
@@ -671,8 +710,8 @@ class Photoalbum {
 		$ret = "<a href=\"{$_config['selfUrl']}/{$_config["scriptname"]}/";
 
 		switch ($var) {
-			case 'tag':   $ret .= "tag/$val"; break;
-			case 'album': $ret .= "album/$val"; break;
+			case 'tag':   $ret .= "tag/$val?${params}"; break;
+			case 'album': $ret .= "album/$val?${params}"; break;
 			case 'image': $ret .= "image/{$val}.html?${params}"; break;
 			default: die('This should not happen');
 		}
@@ -707,9 +746,10 @@ class Photoalbum {
 	 * See parseUrl() for the URL's syntax
 	 */
 	private function hrefWithPage($page) {
+		$urlpcs=explode("?",$_SERVER['REQUEST_URI'],2);
 		return (strstr( $_SERVER['REQUEST_URI'], 'page_')) ?
 			preg_replace('@page_([0-9]+)@', 'page_'.$page, $_SERVER['REQUEST_URI'])
-			: "{$_SERVER['REQUEST_URI']}/page_$page.html";
+			: "{$urlpcs[0]}/page_$page.html?{$urlpcs[1]}";
 	}
 
 	/**
@@ -773,7 +813,7 @@ class Photoalbum {
 	private function htmlTagTree() {
 		global $i18n;
 
-		echo "<h1>{$i18n['Tags']}</h1>\n";
+		echo "<h2>{$i18n['Tags']}</h2>\n";
 		$this->htmlTagTreeRecursive($this->_tagTree->root(), 0);
 	}
 
