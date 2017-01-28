@@ -1,6 +1,8 @@
-    Copyright 2006-2011
+    Copyright 2006-2017
     Author: Thorben Kröger <thorbenk@gmx.net>
             Laurent Bovet <laurent.bovet@windmaster.ch>
+
+	    Matt Martin <m-g-m@github.com>
 
     This file is part of phpdigikam
 
@@ -18,7 +20,7 @@
 Overview
 ========
 
-This PHP application gives web access to your Digikam 1.x photo
+This PHP application gives web access to your Digikam 5.x photo
 collection.
 
 Installation
