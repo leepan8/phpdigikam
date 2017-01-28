@@ -1,8 +1,9 @@
 <?php
 /*
-Copyright 2006-2011
+Copyright 2006-2017
 Author: Thorben Kröger <thorbenk@gmx.net>
         Laurent Bovet <laurent.bovet@windmaster.ch>
+        Matt Martin
 
 This file is part of phpdigikam
 
@@ -22,8 +23,11 @@ GNU General Public License for more details.
 //Language
 require_once('lang/en.lang.php');
 
+//Title for Web Page
+$_config['AlbumTitle'] = "Martin Photo Album";
+
 //Albums to hide
-$_config['restrictedAlbums'] = "Albums.id NOT IN (1,999)";
+$_config['restrictedAlbums'] = "Albums.id NOT IN (1,1853)";
 
 // tags to hide
 $_config['restrictedTags'] = "tagid=154";

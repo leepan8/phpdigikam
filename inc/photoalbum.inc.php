@@ -59,9 +59,11 @@ class Photoalbum {
 		//Link to homepage only if not viewing image
 		if (!isset($_GET['image']) && !isset($_GET['partialpage'])) {
 			$lnkstr=$_config["selfUrl"]."/".$_config["scriptname"].'?minRating=';
-			printf("<table width=100%><tr><td width=80%><b>%s</b></td><td><p style=\"float:right\">\n",$_config['AlbumTitle']);
+			printf("<table width=100%% bgcolor=#303030 style='margin-bottom:-2em;border:0px collapse'><tr style='margin-bottom:-1em'><td width=80%%><b>%s</b></td><td><p style=\"float:right;margin:0\">\n",$_config['AlbumTitle']);
+	
 			printf("\t<a href=\"%s\">", $lnkstr.$_GET['minRating']);
 			printf("<img src=\"%s/icons/home.gif\" alt=\"Home\" border=\"0\" /></a>",$_config["selfUrl"]);
+                        # Make links for image raring filter
 			printf("\tMin Rating:");
 			foreach( array('-1','1','2','3','4','5') as $rtg) {
 				if ($rtg=='-1') $vrtg='All';
@@ -178,6 +180,7 @@ class Photoalbum {
 			$tagstr=$this->_tagTree->htmlPathToTag($row['id']);
 			if (strpos($tagstr,"People")!==false) {
 				$person=substr($tagstr,strpos($tagstr,"&gt")+10,-4);
+				if ((strlen($pplstr)-strrpos($pplstr,"<br>"))>190) $pplstr=$pplstr."<br>";
 				$pplstr=$pplstr.$person.",";
 			}	
 			else {
@@ -650,14 +653,14 @@ class Photoalbum {
 		global $_config;
 
 		return $this->_db->query(
-			'SELECT Images.id FROM Images, Albums'.
+			'SELECT COUNT(*) FROM Images, Albums'.
 			' WHERE Images.id IN'.
 			' (SELECT imageid FROM ImageTags'.
 			' WHERE '.$this->whereClause($tagId).
 			' AND '.$_config['restrictedAlbums'].
 			')'.
 			' AND Albums.id=Images.album LIMIT 0, 1'
-		)->fetchColumn() > 0;
+		)->fetchColumn();
 	}
 
 	/**
@@ -792,8 +795,8 @@ class Photoalbum {
 		//Go through all ids
 		echo str_repeat("\t", $level)."<ul>\n";
 		foreach ($node->children() as $child) {
-			//if (true || $this->hasImagesWithTag($child->key())) {
-			if ($this->hasImagesWithTag($child->key())) {
+			$tagcnt=$this->hasImagesWithTag($child->key());
+			if ($tagcnt>0) {
 				if ($child->path()) {
 					$path = $this->stripLeadingSlash($child->path());
 					$thumb = $this->getThumbnailFileName($path);
@@ -803,7 +806,7 @@ class Photoalbum {
 				}
 
 				echo str_repeat("\t", $level + 1);
-				echo '<li onmouseover="show(\'t'.$child->key().'\');" onmouseout="hide(\'t'.$child->key().'\');"><span class=collapse>'.$this->mkLink('tag', $child->key(), $child->data()." ".$thumb_incl)."</span></li>\n";
+				echo '<li onmouseover="show(\'t'.$child->key().'\');" onmouseout="hide(\'t'.$child->key().'\');"><span class=collapse>'.$this->mkLink('tag', $child->key(), $child->data()." ".$thumb_incl)."<font size=-1>({$tagcnt})</font></span></li>\n";#
 				$this->htmlTagTreeRecursive($child, $level + 1);
 			}
 		}
